@@ -20,7 +20,7 @@ bot.on('error', onError)
 bot.start().catch(console.error)
 
 function onScan(qrcode: any, status: any) {
-  qrTerm.generate(qrcode, {small: true}) // show qrcode on console
+  qrTerm.generate(qrcode, {small: true})
 }
 
 function onLogin(user: Contact) {
@@ -34,7 +34,7 @@ function onLogout(user: Contact) {
 
 function onMessage(msg: any) {
   const {text}: {text: string} = msg.payload
-  if (msg.from().name() !== process.env.SELF) {
+  if (msg.from().name() === process.env.ALICE) {
     if (text.match(/关闭|退出/)) {
       console.log('您的私人助手即将下线，再见！')
       setTimeout(() => process.exit(), 5000)
@@ -55,6 +55,6 @@ async function main() {
   const alice = await bot.Contact.find({name: process.env.ALICE})
   log.info('Bot found:', alice!.id)
   console.log = async function(msg: string) {
-    await (alice as Contact).say(msg)
+    await alice!.say(msg)
   }
 }
