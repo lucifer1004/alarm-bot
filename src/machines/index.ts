@@ -31,13 +31,11 @@ export const alarmMachine = Machine(
       awake: {
         entry: assign({
           wakeUp: () => Date.now(),
-          sleep: (context: any) => Date.now() - context.goToBed,
+          sleep: (context: any) => context.goToBed === 0 ? 0 : Date.now() - context.goToBed,
         }),
         on: {
-          WORK: {
-            target: 'working',
-            actions: assign({startWork: () => Date.now()}),
-          },
+          WORK: 'working',
+          SLEEP: 'asleep',
         },
       },
       working: {
@@ -58,7 +56,7 @@ export const alarmMachine = Machine(
         initial: 'cheer',
         states: {
           cheer: {
-            entry: 'cheer',
+            entry: 'cheerWork',
             after: [
               {
                 delay: ms('10 mins'),
@@ -94,6 +92,27 @@ export const alarmMachine = Machine(
         on: {
           SLEEP: 'asleep',
           WORK: 'working',
+        },
+        initial: 'start',
+        states: {
+          start: {
+            entry: 'cheerRest',
+            after: [
+              {
+                delay: ms('15 mins'),
+                target: 'timer',
+              },
+            ],
+          },
+          timer: {
+            entry: 'queryRestStatus',
+            after: [
+              {
+                delay: ms('15 mins'),
+                target: 'timer',
+              },
+            ],
+          },
         },
       },
       asleep: {
@@ -133,7 +152,7 @@ export const alarmMachine = Machine(
   },
   {
     actions: {
-      showStats: (context: any) => {
+      showStats: context => {
         moment.locale('zh-cn')
         console.log(`
           今日总结:
@@ -143,18 +162,33 @@ export const alarmMachine = Machine(
           休息 ${moment.duration(context.rest).humanize()}
         `)
       },
-      cheer: (context: any) => {
+      cheerWork: context => {
         if (context.muted) return
         console.log('开始工作，加油💪')
       },
-      sayQuote: (context: any) => {
+      cheerRest: context => {
+        if (!context.muted) console.log('好好休息🛏')
+      },
+      sayQuote: context => {
         if (context.muted) return
-        const num = 0 | Math.random() * (quotes.length - 1)
+        const num = 0 | (Math.random() * (quotes.length - 1))
         console.log(`${quotes[num].quote}\n————${quotes[num].author}`)
       },
-      queryWorkStatus: (context: any) => {
+      queryRestStatus: context => {
+        if (!context.muted)
+          console.log(
+            `你已经休息了${moment
+              .duration(Date.now() - context.startRest)
+              .minutes()}分钟`,
+          )
+      },
+      queryWorkStatus: context => {
         if (context.muted) return
-        console.log(`已经持续工作了${moment.duration(Date.now() - context.startWork).minutes()}分钟，要不要休息一下？`)
+        console.log(
+          `已经持续工作了${moment
+            .duration(Date.now() - context.startWork)
+            .minutes()}分钟，要不要休息一下？`,
+        )
       },
     },
     activities: {
