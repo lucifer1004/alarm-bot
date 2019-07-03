@@ -56,25 +56,26 @@ export const alarmMachine = Machine(
         if (!context.muted) console.log('好好休息🛏')
       },
       sayQuote: context => {
-        if (context.muted) return
-        const num = 0 | (Math.random() * (quotes.length - 1))
-        console.log(`${quotes[num].quote}\n————${quotes[num].author}`)
+        if (!context.muted) {
+          const num = 0 | (Math.random() * (quotes.length - 1))
+          console.log(`${quotes[num].quote}\n————${quotes[num].author}`)
+        }
       },
       queryRestStatus: context => {
-        if (!context.muted)
+        if (!context.muted) {
+          const duration = moment.duration(Date.now() - context.startRest)
           console.log(
-            `你已经休息了${moment
-              .duration(Date.now() - context.startRest)
-              .minutes()}分钟`,
+            `你已经休息了${duration.hours()}小时${duration.minutes()}分钟`,
           )
+        }
       },
       queryWorkStatus: context => {
-        if (context.muted) return
-        console.log(
-          `已经持续工作了${moment
-            .duration(Date.now() - context.startWork)
-            .minutes()}分钟，要不要休息一下？`,
-        )
+        if (!context.muted) {
+          const duration = moment.duration(Date.now() - context.startWork)
+          console.log(
+            `已经持续工作了${duration.hours()}小时${duration.minutes()}分钟，要不要休息一下？`,
+          )
+        }
       },
     },
     activities: {
